@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../utils/app_colors.dart';
-import 'preview_screen.dart';
+import 'home_shell.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -61,7 +61,7 @@ class WelcomeScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (_) => const PreviewScreen()),
+                      MaterialPageRoute(builder: (_) => const HomeShell()),
                     );
                   },
                   style: ElevatedButton.styleFrom(
