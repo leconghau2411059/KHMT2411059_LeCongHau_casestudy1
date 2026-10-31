@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../db/database_helper.dart';
 import '../models/transaction_model.dart';
 import '../utils/app_colors.dart';
 import '../utils/categories.dart';
@@ -86,8 +87,21 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   Future<void> _save() async {
     final tx = _buildTransaction();
     if (tx == null) return;
-    // Buổi 3: chỉ trả dữ liệu về màn hình trước. Buổi 6 sẽ lưu vào SQLite.
-    Navigator.pop(context, tx);
+    final db = DatabaseHelper.instance;
+    if (widget.isEdit) {
+      await db.update(tx);
+    } else {
+      await db.insert(tx);
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(widget.isEdit
+            ? 'Đã cập nhật giao dịch'
+            : 'Đã thêm giao dịch'),
+      ),
+    );
+    Navigator.pop(context, true);
   }
 
   @override

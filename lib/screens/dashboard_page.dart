@@ -1,44 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../db/database_helper.dart';
 import '../models/transaction_model.dart';
 import '../utils/app_colors.dart';
 import '../utils/formatters.dart';
 import '../widgets/transaction_tile.dart';
 import 'transaction_form_screen.dart';
-
-// Dữ liệu mẫu của buổi 4 (buổi 6 sẽ thay bằng dữ liệu đọc từ SQLite).
-final List<TransactionModel> _sampleTransactions = [
-  TransactionModel(
-      isExpense: true,
-      category: 'Ăn uống',
-      amount: 50000,
-      date: DateTime(2024, 9, 3),
-      note: 'Ăn trưa'),
-  TransactionModel(
-      isExpense: true,
-      category: 'Di chuyển',
-      amount: 100000,
-      date: DateTime(2024, 9, 3),
-      note: 'Xăng xe'),
-  TransactionModel(
-      isExpense: false,
-      category: 'Thu nhập',
-      amount: 8000000,
-      date: DateTime(2024, 9, 1),
-      note: 'Lương tháng 9'),
-  TransactionModel(
-      isExpense: true,
-      category: 'Mua sắm',
-      amount: 300000,
-      date: DateTime(2024, 8, 31),
-      note: 'Mua sắm'),
-  TransactionModel(
-      isExpense: true,
-      category: 'Giáo dục',
-      amount: 500000,
-      date: DateTime(2024, 8, 30),
-      note: 'Học phí'),
-];
 
 /// Nội dung tab "Trang chủ": số dư, tổng thu/chi, giao dịch gần đây.
 class DashboardPage extends StatefulWidget {
@@ -49,8 +16,36 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  final _db = DatabaseHelper.instance;
   bool hideBalance = false;
-  List<TransactionModel> transactions = _sampleTransactions;
+  bool loading = true;
+  List<TransactionModel> transactions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+    // Tự tải lại mỗi khi dữ liệu thay đổi (thêm / sửa).
+    _db.changes.addListener(_load);
+  }
+
+  @override
+  void dispose() {
+    _db.changes.removeListener(_load);
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final data = await _db.getTransactions();
+    if (!mounted) return;
+    setState(() {
+      transactions = data;
+      loading = false;
+    });
+  }
+
+  // Dashboard chỉ hiển thị 5 giao dịch gần nhất.
+  List<TransactionModel> get recent => transactions.take(5).toList();
 
   int get totalIncome =>
       transactions.where((t) => !t.isExpense).fold(0, (s, t) => s + t.amount);
@@ -62,6 +57,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
       children: [
@@ -111,23 +109,35 @@ class _DashboardPageState extends State<DashboardPage> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.grey.shade200),
           ),
-          child: Column(
-            children: [
-              for (var i = 0; i < transactions.length; i++) ...[
-                if (i > 0) Divider(height: 1, color: Colors.grey.shade200),
-                TransactionTile(
-                  transaction: transactions[i],
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          TransactionFormScreen(transaction: transactions[i]),
+          child: recent.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(
+                    child: Text(
+                      'Chưa có giao dịch nào.\nNhấn nút + để thêm giao dịch đầu tiên.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.textGrey),
                     ),
                   ),
+                )
+              : Column(
+                  children: [
+                    for (var i = 0; i < recent.length; i++) ...[
+                      if (i > 0)
+                        Divider(height: 1, color: Colors.grey.shade200),
+                      TransactionTile(
+                        transaction: recent[i],
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                TransactionFormScreen(transaction: recent[i]),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ],
-          ),
         ),
       ],
     );

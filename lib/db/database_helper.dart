@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -11,6 +12,9 @@ class DatabaseHelper {
   static const String _dbName = 'expense_manager.db';
   static const int _dbVersion = 1;
   static const String table = 'transactions';
+
+  /// Tăng giá trị mỗi khi dữ liệu thay đổi để các màn hình tự tải lại.
+  final ValueNotifier<int> changes = ValueNotifier<int>(0);
 
   Future<Database>? _dbFuture;
 
@@ -41,24 +45,30 @@ class DatabaseHelper {
   Future<int> insert(TransactionModel tx) async {
     final db = await database;
     final map = tx.toMap()..remove('id');
-    return db.insert(table, map);
+    final id = await db.insert(table, map);
+    changes.value++;
+    return id;
   }
 
   /// Cập nhật giao dịch theo id.
   Future<int> update(TransactionModel tx) async {
     final db = await database;
-    return db.update(
+    final count = await db.update(
       table,
       tx.toMap(),
       where: 'id = ?',
       whereArgs: [tx.id],
     );
+    changes.value++;
+    return count;
   }
 
   /// Xóa giao dịch theo id.
   Future<int> delete(int id) async {
     final db = await database;
-    return db.delete(table, where: 'id = ?', whereArgs: [id]);
+    final count = await db.delete(table, where: 'id = ?', whereArgs: [id]);
+    changes.value++;
+    return count;
   }
 
   /// Lấy giao dịch, mới nhất trước. Có thể giới hạn số lượng.
