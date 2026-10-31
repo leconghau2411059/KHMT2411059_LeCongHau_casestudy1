@@ -81,4 +81,23 @@ class DatabaseHelper {
     );
     return rows.map(TransactionModel.fromMap).toList();
   }
+
+  /// Tổng thu nhập và tổng chi tiêu, tính trực tiếp bằng SQL.
+  Future<({int income, int expense})> getTotals() async {
+    final db = await database;
+    final rows = await db.rawQuery(
+      'SELECT type, SUM(amount) AS total FROM $table GROUP BY type',
+    );
+    var income = 0;
+    var expense = 0;
+    for (final row in rows) {
+      final total = (row['total'] as int?) ?? 0;
+      if (row['type'] == 'income') {
+        income = total;
+      } else {
+        expense = total;
+      }
+    }
+    return (income: income, expense: expense);
+  }
 }

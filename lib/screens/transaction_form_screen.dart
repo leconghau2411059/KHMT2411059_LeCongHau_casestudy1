@@ -104,6 +104,33 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     Navigator.pop(context, true);
   }
 
+  Future<void> _confirmDelete() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xóa giao dịch'),
+        content: const Text('Bạn có chắc muốn xóa giao dịch này không?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xóa',
+                style: TextStyle(color: AppColors.expenseText)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await DatabaseHelper.instance.delete(widget.transaction!.id!);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Đã xóa giao dịch')));
+    Navigator.pop(context, true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final categories = Categories.listFor(isExpense);
@@ -124,6 +151,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         surfaceTintColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        actions: [
+          if (widget.isEdit)
+            IconButton(
+              tooltip: 'Xóa giao dịch',
+              icon: const Icon(Icons.delete_outline, color: AppColors.expenseText),
+              onPressed: _confirmDelete,
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

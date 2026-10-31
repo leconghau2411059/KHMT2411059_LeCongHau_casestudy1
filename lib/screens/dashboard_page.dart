@@ -19,7 +19,9 @@ class _DashboardPageState extends State<DashboardPage> {
   final _db = DatabaseHelper.instance;
   bool hideBalance = false;
   bool loading = true;
-  List<TransactionModel> transactions = [];
+  List<TransactionModel> recent = [];
+  int totalIncome = 0;
+  int totalExpense = 0;
 
   @override
   void initState() {
@@ -36,22 +38,16 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _load() async {
-    final data = await _db.getTransactions();
+    final data = await _db.getTransactions(limit: 5); // 5 giao dịch gần nhất
+    final totals = await _db.getTotals();
     if (!mounted) return;
     setState(() {
-      transactions = data;
+      recent = data;
+      totalIncome = totals.income;
+      totalExpense = totals.expense;
       loading = false;
     });
   }
-
-  // Dashboard chỉ hiển thị 5 giao dịch gần nhất.
-  List<TransactionModel> get recent => transactions.take(5).toList();
-
-  int get totalIncome =>
-      transactions.where((t) => !t.isExpense).fold(0, (s, t) => s + t.amount);
-
-  int get totalExpense =>
-      transactions.where((t) => t.isExpense).fold(0, (s, t) => s + t.amount);
 
   int get balance => totalIncome - totalExpense;
 
