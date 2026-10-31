@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../utils/app_colors.dart';
 import 'dashboard_page.dart';
+import 'statistics_page.dart';
+import 'transactions_page.dart';
 import 'transaction_form_screen.dart';
 
 /// Khung chính của ứng dụng: AppBar, thanh điều hướng dưới và nút thêm (+).
@@ -37,10 +39,10 @@ class _HomeShellState extends State<HomeShell> {
       ),
       body: IndexedStack(
         index: currentIndex,
-        children: const [
-          DashboardPage(),
-          Center(child: Text('Giao dịch (sẽ làm ở buổi 8)')),
-          Center(child: Text('Thống kê (sẽ làm ở buổi 8)')),
+        children: [
+          DashboardPage(onSeeAll: () => setState(() => currentIndex = 1)),
+          const TransactionsPage(),
+          const StatisticsPage(),
         ],
       ),
       floatingActionButton: FloatingActionButton(

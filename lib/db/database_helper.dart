@@ -100,4 +100,19 @@ class DatabaseHelper {
     }
     return (income: income, expense: expense);
   }
+
+  /// Tổng chi tiêu theo từng danh mục, nhiều nhất trước.
+  Future<List<({String category, int total})>> getExpenseByCategory() async {
+    final db = await database;
+    final rows = await db.rawQuery(
+      'SELECT category, SUM(amount) AS total FROM $table '
+      "WHERE type = 'expense' GROUP BY category ORDER BY total DESC",
+    );
+    return rows
+        .map((r) => (
+              category: r['category'] as String,
+              total: (r['total'] as int?) ?? 0,
+            ))
+        .toList();
+  }
 }

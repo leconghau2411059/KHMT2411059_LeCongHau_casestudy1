@@ -9,7 +9,10 @@ import 'transaction_form_screen.dart';
 
 /// Nội dung tab "Trang chủ": số dư, tổng thu/chi, giao dịch gần đây.
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  /// Được gọi khi nhấn "Xem tất cả" (chuyển sang tab Giao dịch).
+  final VoidCallback? onSeeAll;
+
+  const DashboardPage({super.key, this.onSeeAll});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -93,7 +96,7 @@ class _DashboardPageState extends State<DashboardPage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: widget.onSeeAll,
               child: const Text('Xem tất cả'),
             ),
           ],
